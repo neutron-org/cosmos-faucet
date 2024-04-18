@@ -1,15 +1,16 @@
 import * as dotenv from 'dotenv';
 import { Wallet } from './wallet';
-import cosmosclient from '@cosmos-client/core';
+import cosmosclient  from '@cosmos-client/core';
 import Long from 'long';
+import ICoin = cosmosclient.proto.cosmos.base.v1beta1.ICoin;
 dotenv.config();
 
 export class Chain {
   #wallet: Wallet;
   #sdk: cosmosclient.CosmosSDK;
   #gasLimit: string;
-  #denom: string;
-  #fee: string;
+  #fee_denom: string;
+  #fee_amount: string;
 
   constructor() {
     if (!process.env.REST_URL) {
@@ -18,22 +19,22 @@ export class Chain {
     if (!process.env.CHAIN_ID) {
       throw new Error('CHAIN_ID is not set');
     }
-    if (!process.env.DENOM) {
-      throw new Error('DENOM is not set');
+    if (!process.env.FEE_DENOM) {
+      throw new Error('FEE_DENOM is not set');
     }
     if (!process.env.GAS_LIMIT) {
       throw new Error('GAS_LIMT is not set');
     }
-    if (!process.env.FEE) {
-      throw new Error('FEE is not set');
+    if (!process.env.FEE_AMOUNT) {
+      throw new Error('FEE_AMOUNT is not set');
     }
     this.#sdk = new cosmosclient.CosmosSDK(
       process.env.REST_URL,
       process.env.CHAIN_ID,
     );
     this.#gasLimit = process.env.GAS_LIMIT;
-    this.#denom = process.env.DENOM;
-    this.#fee = process.env.FEE;
+    this.#fee_denom = process.env.FEE_DENOM;
+    this.#fee_amount = process.env.FEE_AMOUNT;
   }
 
   async init() {
@@ -153,17 +154,17 @@ export class Chain {
     return txHash || '';
   };
 
-  fundAccount = async (to: string, amount: string, numAttempts = 20, waitTime = 1000): Promise<string> => {
+  fundAccount = async (to: string, coins: ICoin[], numAttempts = 20, waitTime = 1000): Promise<string> => {
     await this.updateWallet();
     const msgSend = new cosmosclient.proto.cosmos.bank.v1beta1.MsgSend({
       from_address: this.#wallet.address.toString(),
       to_address: to,
-      amount: [{ denom: this.#denom, amount }],
+      amount: coins,
     });
     const txHash = await this.#execTx(
       {
         gas_limit: Long.fromString(this.#gasLimit),
-        amount: [{ denom: this.#denom, amount: this.#fee }],
+        amount: [{ denom: this.#fee_denom, amount: this.#fee_amount }],
       },
       [msgSend],
     );

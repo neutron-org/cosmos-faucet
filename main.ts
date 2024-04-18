@@ -3,6 +3,8 @@ dotenv.config({ path: '..' });
 import * as transports from './lib/transports';
 import { Cache } from './lib/cache';
 import { Chain } from './lib/chain';
+import cosmosclient  from '@cosmos-client/core';
+import ICoin = cosmosclient.proto.cosmos.base.v1beta1.ICoin;
 
 const transport = (process.env.TRANSPORT || '')
   ?.split(',')
@@ -11,6 +13,21 @@ if (!transport?.length) {
   throw new Error('TRANSPORT is not set');
 }
 console.log(transport);
+
+function parseCoin(input: string): ICoin {
+  const regex = /^(\d+)([a-zA-Z]+)$/; // Regex pattern to match amount followed by letters
+  const match = input.match(regex);
+
+  if (!match) {
+    // If the input doesn't match the expected pattern, return null
+    throw new Error('cannot parse coins');
+  }
+
+  const amount = match[1]; // Parse the amount part of the string
+  const denom = match[2]; // Get the denom part of the string
+
+  return {amount, denom};
+}
 
 class Main {
   async init() {
@@ -22,7 +39,8 @@ class Main {
     if (!process.env.DROP_AMOUNT) {
       throw new Error('DROP_AMOUNT is not set');
     }
-    const amount = process.env.DROP_AMOUNT;
+    const coins = process.env.DROP_AMOUNT.split(",").map(parseCoin).sort((a, b) => a.denom.localeCompare(b.denom));
+
     await chain.init();
     console.log('Chain stuff has been initialized');
     const timeout = parseInt(process.env.TX_TIMEOUT || '2s');
@@ -31,7 +49,7 @@ class Main {
         const x = new t();
         if (!transport.includes(x.name)) return;
         x.init(cache);
-        x.onRequest(async (address) => chain.fundAccount(address, amount));
+        x.onRequest(async (address) => chain.fundAccount(address, coins));
       }),
     );
   }
