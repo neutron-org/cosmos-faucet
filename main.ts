@@ -15,7 +15,7 @@ if (!transport?.length) {
 console.log(transport);
 
 function parseCoin(input: string): ICoin {
-  const regex = /^(\d+)([a-zA-Z]+)$/; // Regex pattern to match amount followed by letters
+  const regex = /^(\d+)([a-zA-Z\/\d]+)$/; // Regex pattern to match amount followed by letters
   const match = input.match(regex);
 
   if (!match) {
