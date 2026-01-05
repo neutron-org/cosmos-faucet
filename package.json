@@ -14,7 +14,7 @@
     "esbuild": "^0.15.13",
     "esbuild-runner": "^2.2.2",
     "file-system-cache": "^2.0.1",
-    "node-telegram-bot-api": "^0.60.0"
+    "node-telegram-bot-api": "^0.64.0"
   },
   "devDependencies": {
     "@types/node-telegram-bot-api": "^0.57.6",
